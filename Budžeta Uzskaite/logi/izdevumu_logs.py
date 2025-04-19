@@ -2,6 +2,7 @@ from PyQt5.QtWidgets import QDialog, QLabel, QLineEdit, QPushButton, QVBoxLayout
 from PyQt5.QtCore import QDate, Qt
 from dati.datubaze import Izdevumi, Kategorija, sesija
 from dizains.stils import get_stils
+import re
 
 class IzdevumuLogs(QDialog):
     def __init__(self, lietotaja_id):
@@ -53,18 +54,22 @@ class IzdevumuLogs(QDialog):
         self.setLayout(layout)
 
     def pievienot_kategoriju(self):
-        jaunais_nosaukums = self.jauna_kategorija_ievade.text().strip()
-    
+        jaunais_nosaukums = self.jauna_kategorija_ievade.text().strip().capitalize()                 # Iegūst jaunās kategorijas nosaukumu
+       
         if not jaunais_nosaukums:
             QMessageBox.warning(self, "Kļūda", "Kategorijas nosaukums nevar būt tukšs!")
             return
-
+        
+        if not re.match(r"^[a-zA-ZāčēģīķļņōŗšūžĀČĒĢĪĶĻŅŌŖŠŪŽ\s-]+$", jaunais_nosaukums):
+            QMessageBox.warning(self, "Kļūda", "Kategorijas nosaukumam nevar saturēt simbolus!")
+            return
+        
         # Pārbauda, vai kategorija jau eksistē
-        ekzistejosa = sesija.query(Kategorija).filter_by(nosaukums=jaunais_nosaukums, veids="izdevumi").first()
+        ekzistejosa = sesija.query(Kategorija).filter_by(nosaukums=jaunais_nosaukums, veids="ienakumi").first()
         if ekzistejosa:
             QMessageBox.warning(self, "Kļūda", "Šāda kategorija jau pastāv!")
             return
-
+        
         # Izveido jaunu kategoriju un saglabāt datubāzē
         jauna_kategorija = Kategorija(nosaukums=jaunais_nosaukums, veids="izdevumi")
         sesija.add(jauna_kategorija)
